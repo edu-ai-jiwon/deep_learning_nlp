@@ -74,14 +74,13 @@ def emotion_clf():
 st.divider()
 
 
-# 섹션 1: 감성분석 (1) 긍정 / 부정
-
-st.header("😊 1. 감성분석 (1) — 긍정 / 부정")
-st.write("모델: `sangrimlee/bert-base-multilingual-cased-nsmc`")
+#  1. 긍정 / 부정
+st.header("😊 1. 긍정 / 부정 감정 분석")
+st.write("모델: `sangrimlee/bert-base-multilingual-cased-nsmc`")    
 
 input_mode1 = st.radio(
     "입력 방식 선택",
-    ["직접 입력", "영화 리뷰 34개 분석"],
+    ["직접 입력", "영화 리뷰 34개 분석"],    # 직접 입력: 사용자 입력 / 영화 리뷰 34개 분석: '왕과 사는 남자' 영화 리뷰 데이터
     key="input_mode1",
     horizontal=True,    # 선택지를 가로로 나열(X 세로로 나열됨)
 )
@@ -122,19 +121,18 @@ if st.button("분석하기", key="sentiment_btn"):
 st.divider()
 
 
-# 섹션 2: 감성분석 (2) 감정 분류
-
-st.header("🎭 2. 감성분석 (2) — 감정 분류")
+# 2.감정 분류
+st.header("🎭 2. 감정 분류")
 st.write("모델: `Seonghaa/korean-emotion-classifier-roberta`")
 
-input_mode_2 = st.radio(
+input_mode2 = st.radio(
     "입력 방식 선택",
     ["직접 입력", "영화 리뷰 34개 분석"],
-    key="input_mode_2",
+    key="input_mode2",
     horizontal=True,
 )
 
-if input_mode_2 == "직접 입력":
+if input_mode2 == "직접 입력":
     user_text2 = st.text_area("텍스트 입력", height=100, key="user_text2")
     texts_analyze2 = [user_text2] if user_text2.strip() else []
 else:
