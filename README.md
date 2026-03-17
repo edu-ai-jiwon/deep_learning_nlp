@@ -1,5 +1,7 @@
+# 영화 감상 감정 분석
 ## Huggingface_pipeline 
 - transformers 라이브러리 활용
+- data: '왕과 사는 남자' 영화 리뷰 기반
 
 ------------
 
