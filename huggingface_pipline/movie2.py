@@ -170,49 +170,50 @@ if st.button("분석하기", key="emotion_btn"):
 
         joy_count = 0
         sadness_count = 0
-        anger_count=0
-        anxiety_count=0
-        tranquility_count=0
+        anger_count = 0
+        anxiety_count = 0
+        tranquility_count = 0
 
         for pred, i in results:
             label = pred["label"]
             score = pred["score"]
-            emoji = EMOTION_EMOJI.get(label, "🔍")
 
-            # 특정 슬랭어
-            # 뉘앙스 구분
-            slang_joy=["미쳤다", "미쳤고","미침","실화냐","레전드", "개잘생김","역대급"]
+            # 슬랭 체크 → label만 바꿈
+            slang_joy = ["미쳤다", "미쳤고", "미침", "실화냐", "레전드", "개잘생김", "역대급"]
             if any(word in i for word in slang_joy):
-                label="기쁨"
-                joy_count +=1
+                label = "기쁨"
 
-            
-            slang_angry=["개구림", "별로임", "별로", "어이없음", "뭐임", "노잼", "개별로", "돈 버림", "질 떨어짐"]
+            slang_angry = ["개구림", "별로임", "별로", "어이없음", "뭐임", "노잼", "개별로", "돈 버림", "질 떨어짐"]
             if any(word in i for word in slang_angry):
                 label = "분노"
-                angry_count +=1
 
-            slang_anxiety=["혼란스럽다", "홀란", "이게 뭔데", "알 수 없음"]
+            slang_anxiety = ["혼란스럽다", "홀란", "이게 뭔데", "알 수 없음"]
             if any(word in i for word in slang_anxiety):
-                label="당황"
-                anxiety_count +=1
+                label = "불안"
 
-            slang_tranquility=["느끼다", "느끼게 해주다", "느낀다", "느끼게"]
-            if any(word in i for word in slang_anxiety):
-                label="평온"
+            slang_tranquility = ["느끼다", "느끼게 해주다", "느낀다", "느끼게"]
+            if any(word in i for word in slang_tranquility):  # ✅ 수정
+                label = "평온"
+
+            # ✅ 슬랭 체크 다 끝난 후 label 기준으로 count
+            if label == "기쁨":
+                joy_count += 1
+            elif label == "슬픔":
+                sadness_count += 1
+            elif label == "분노":
+                anger_count += 1
+            elif label == "불안":
+                anxiety_count += 1
+            elif label == "평온":
                 tranquility_count += 1
 
-            #EMOTION_EMOJI에서 label이 기쁨일 경우 
-            # -> 😄 이모지 가져오게 함/ dic 없는 감정이면 🔍(기본값)
-            emoji=EMOTION_EMOJI.get(label,"🔍")
+            emoji = EMOTION_EMOJI.get(label, "🔍")
             st.write(f"{emoji} **{label}** ({score:.0%}) | {i[:40]}...")
-            #st.write~
-            # :이모지+감정(감정 명칭)+신뢰도+리뷰 앞 40글자 화면에 출력하게 함
-        
+
         st.divider()
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns(3)  # 3개 컬럼으로 변경
         col1.metric("😄 기쁨", f"{joy_count}개")
         col2.metric("😢 슬픔", f"{sadness_count}개")
-        col2.metric("😠 분노", f"{anger_count}개")
-        col2.metric("😰 불안", f"{anxiety_count}개")
+        col3.metric("😠 분노", f"{anger_count}개")
+        col1.metric("😰 불안", f"{anxiety_count}개")
         col2.metric("😌 평온", f"{tranquility_count}개")
