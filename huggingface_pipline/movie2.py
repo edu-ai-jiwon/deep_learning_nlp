@@ -1,11 +1,12 @@
-#pip install streamlit
-#streamlit run movie.py
+#환경 설정: pip install streamlit
+#실행어: streamlit run movie2.py
 
 import streamlit as st
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
 import torch
+import time
 
-st.set_page_config(page_title="영화 감상 리뷰 감정 분석", page_icon="🤗", layout="wide")
+st.set_page_config(page_title="영화 감상 리뷰 감정 분석 ChatBot", page_icon="🤗", layout="wide")
 st.title("🤗 영화 감상 리뷰 감정 분석")
 st.write("➡️ 라이브러리 활용: Transformers 라이브러리")
 st.write("➡️ 총 2가지의 모델 사용")
@@ -70,6 +71,22 @@ def emotion_clf():
     )
     return clf
 
+# 감정별 이미지 경로 dict(images 폴더 - 각 감정별 이미지)
+EMOTION_IMAGE={
+    "기쁨": "images/joy.gif",
+    "슬픔": "images/sadness.gif",
+    "분노": "images/anger.gif",
+    "불안": "images/anxiety.gif",
+    "평온": "images/tranquility.gif",
+}
+
+EMOTION_EMOJI = {
+    "기쁨": "😄",
+    "슬픔": "😢",
+    "분노": "😠",
+    "불안": "😰",
+    "평온": "😌",
+}
 
 st.divider()
 
@@ -78,6 +95,7 @@ st.divider()
 
 st.header("😊 1. 긍정 / 부정 감성분석")
 st.write("모델: `sangrimlee/bert-base-multilingual-cased-nsmc`")
+# model: NSMC(Naver Sentiment Movie Corpus)를 기반으로 미세 조정된 bert-base-multilingual-cased의 미세 체크포인트
 
 input_mode1 = st.radio(
     "입력 방식 선택",
@@ -88,7 +106,7 @@ input_mode1 = st.radio(
 
 if input_mode1 == "직접 입력":
     user_text1 = st.text_area("텍스트 입력", height=100, key="user_text1")
-    texts_analyze1 = [user_text1] if user_text1.strip() else []
+    texts_analyze1 = [user_text1] if user_text1.strip() else [] #texts_analyze1 -> 긍/부정으로 분류
 else:
     texts_analyze1 = reviews
     st.info(f"📋 영화 리뷰 {len(reviews)}개를 분석합니다.")
@@ -97,11 +115,31 @@ if st.button("분석하기", key="sentiment_btn"):
     if not texts_analyze1:
         st.warning("텍스트를 입력해주세요.")
     else:
-        with st.spinner("분석 중..."):
-            movie_clf = sentiment_clf()
-            output = movie_clf(texts_analyze1)
 
-        
+        # <수정 포인트>
+        # 로딩 화면 수정(진행 바 & 멘트 추가)
+        loading_bar=st.progress(0)
+        lodaing_text=st.empty()
+
+        loading_messages=[
+            "📽️ 리뷰 불러오는 중...",
+            "🍿 팝콘 준비 중...",
+            "🤖 MB 개굴이 리뷰 분석 중입니다!",
+            "🌟 MB 개굴의 머리가 번뜩입니다!",
+        ]
+        for idx, msg in enumerate(loading_messages):
+            lodaing_text.write(msg)
+            loading_bar.progress((idx+1)*25)
+            time.sleep(0.5)
+
+        #분석 실행 
+        movie_clf=sentiment_clf()
+        output=movie_clf(texts_analyze1)
+
+        #로딩 화면 없애기
+        loading_bar.empty() # 로딩 다 됐으니까 사라지게 해야 함
+        lodaing_text.empty()
+
         positive_count = 0
         negative_count = 0
 
@@ -137,6 +175,8 @@ st.divider()
 
 st.header("🎭 2. 감정 분류")
 st.write("모델: `Seonghaa/korean-emotion-classifier-roberta`")
+#model: 한국어 텍스트를 6가지 감정(분노, 불안, 슬픔, 평온, 당황, 기쁨)으로 분류. klue/roberta-base 기반으로 파인 튜닝
+#본 모델의 6가지 감정 중 5가지 감정을 분류 할 수 있었음 -> data(영화 리뷰) 
 
 input_mode_2 = st.radio(
     "입력 방식 선택",
@@ -164,9 +204,28 @@ if st.button("분석하기", key="emotion_btn"):
     if not texts_analyze2:
         st.warning("텍스트를 입력해주세요.")
     else:
-        with st.spinner("분석 중..."):
-            clf = emotion_clf()
-            results = [(clf(i, truncation=True, max_length=256)[0], i) for i in texts_analyze2]
+        # 로딩 화면
+        loading_bar=st.progress(0)
+        lodaing_text=st.empty()
+
+        loading_messages=[
+            "🔍 감정 분석 준비 중 기다려라 개굴",
+            "📝 리뷰 좀 분석하겠다 개굴",
+            "🐸 MB 개굴이 열심히 머리 돌리는 중...",
+            "🌟 MB 개굴의 머리가 번뜩입니다!"
+        ]
+        for idx, msg in enumerate(loading_messages):
+            lodaing_text.write(msg)
+            loading_bar.progress((idx+1)*25) #25%씩 up
+            time.sleep(0.5)
+        
+        #분석 실행
+        clf=emotion_clf()
+        results=[(clf(i, truncation=True, max_length=256)[0], i)for i in texts_analyze2]
+
+        #로딩 화면 없애기
+        loading_bar.empty()
+        lodaing_text.empty()
 
         joy_count = 0
         sadness_count = 0
@@ -178,7 +237,7 @@ if st.button("분석하기", key="emotion_btn"):
             label = pred["label"]
             score = pred["score"]
 
-            # 슬랭 체크 → label만 바꿈
+            # 특정 슬랭어 체크
             slang_joy = ["미쳤다", "미쳤고", "미침", "실화냐", "레전드", "개잘생김", "역대급"]
             if any(word in i for word in slang_joy):
                 label = "기쁨"
@@ -192,10 +251,10 @@ if st.button("분석하기", key="emotion_btn"):
                 label = "불안"
 
             slang_tranquility = ["느끼다", "느끼게 해주다", "느낀다", "느끼게"]
-            if any(word in i for word in slang_tranquility):  # ✅ 수정
+            if any(word in i for word in slang_tranquility):  # 수정
                 label = "평온"
 
-            # ✅ 슬랭 체크 다 끝난 후 label 기준으로 count
+            # 슬랭 체크 다 끝난 후 label 기준으로 count
             if label == "기쁨":
                 joy_count += 1
             elif label == "슬픔":
@@ -211,9 +270,38 @@ if st.button("분석하기", key="emotion_btn"):
             st.write(f"{emoji} **{label}** ({score:.0%}) | {i[:40]}...")
 
         st.divider()
+
+        #감정별 카운트 다운 + 이미지 
         col1, col2, col3 = st.columns(3)  # 3개 컬럼으로 변경
-        col1.metric("😄 기쁨", f"{joy_count}개")
-        col2.metric("😢 슬픔", f"{sadness_count}개")
-        col3.metric("😠 분노", f"{anger_count}개")
-        col1.metric("😰 불안", f"{anxiety_count}개")
-        col2.metric("😌 평온", f"{tranquility_count}개")
+        
+
+        #<수정 point>
+        #png -> gif를 변경 
+        # 글씨 크기 수정: markdown으로 글씨 크기 조정
+        # 이미지 크기 수정: width=200 너무 작아서 -> width=500으로 수정
+
+        # Count 결과
+        # 기쁜 감정 count
+        col1.markdown("## 😄 기쁨")
+        col1.markdown(f"### {joy_count}개")
+        col1.image("images/joy.gif", width=500)
+
+        #슬픈 감정 count
+        col2.markdown("## 😢 슬픔")
+        col2.markdown(f"### {sadness_count}개")
+        col2.image("images/sadness.gif", width=500)
+
+        #분노 감정 count
+        col3.markdown("## 😠 분노")
+        col3.markdown(f"## {anger_count}개")
+        col3.image("images/anger.gif",width=500)
+
+        #불안 감정 count
+        col1.markdown("## 😰 불안")
+        col1.markdown(f"### {anxiety_count}개")
+        col1.image("images/anxiety.gif",width=500)
+
+        #평온 감정 count
+        col2.markdown("## 😌 평온")
+        col2.markdown(f"### {tranquility_count}개")
+        col2.image("images/tranquility.gif",width=500)

@@ -5,7 +5,7 @@ import streamlit as st
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
 import torch
 
-st.set_page_config(page_title="영화 감상 리뷰 감정 분석", page_icon="🤗", layout="wide")
+st.set_page_config(page_title="영화 감상 리뷰 감정 분석 ChatBOt", page_icon="🤗", layout="wide")
 st.title("🤗 영화 감상 리뷰 감정 분석")
 st.write("➡️ 라이브러리 활용: Transformers 라이브러리")
 st.write("➡️ 총 2가지의 모델 사용")
